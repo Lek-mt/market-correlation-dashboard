@@ -65,8 +65,10 @@ ALL_TICKERS = [item for sublist in ASSETS.values() for item in sublist]
 @st.cache_data
 def load_data(tickers, period):
     data = yf.download(tickers, period=period)['Close']
+    
     if data.empty:
         return None, None
+    data = data.ffill()
     returns = data.pct_change().dropna()
     return data, returns
 
@@ -210,8 +212,11 @@ with tab3:
         
         st.plotly_chart(fig, use_container_width=True)
         
-        curr_corr = rolling_corr.iloc[-1]
-        st.metric(label=f"Corrélation actuelle", value=f"{curr_corr:.2f}")
+        if not rolling_corr.dropna().empty:
+            curr_corr = rolling_corr.iloc[-1]
+            st.metric(label=f"Corrélation actuelle", value=f"{curr_corr:.2f}")
+        else:
+            st.warning("Pas assez de données communes pour calculer la corrélation actuelle.")
         
     else:
         st.error("Choisis deux actifs différents.")
